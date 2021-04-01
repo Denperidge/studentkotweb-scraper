@@ -65,7 +65,7 @@ async function ParseSearchPage(index) {
 				
 			
 			// Link 	Oppervlakte (m²)	Huurprijs	Locatie
-			var result = "{0}\t{1}\t{2}\t";
+			var result = roomUrl + "\t{0}\t{1}\t{2}\r\n";
 
 			var modifiers = [
 				extractNumber,
@@ -95,8 +95,6 @@ async function ParseSearchPage(index) {
 					result = result.replace("{" + i + "}", data);
 				}
 			}
-
-			result += roomUrl + "\r\n"
 			
 			console.log("Added " + roomUrl);
 			fullResult += result;
