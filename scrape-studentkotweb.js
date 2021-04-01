@@ -1,10 +1,11 @@
 const got = require('got');
 const parse = require("node-html-parser").parse;
 const clipboardy = require('clipboardy');
+const fs = require("fs");
 
 
 /* Verander deze variabele door een search page */
-var searchUrl = "https://www.studentkotweb.be/nl/search?search=%28KdG%29%2C%20Campus%20Hoboken&latlon=51.173266800000%252C4.371204200000&proximity=1&distance=5.0&period%5Bfrom%5D=2021-09-01&period%5Bto%5D=2022-08-01&f%5B0%5D=field_quality_label%3A1&f%5B1%5D=field_building%253Afield_facilities%3Ainternet&f%5B2%5D=field_rental_price%3A%5B0%20TO%20802%5D&f%5B3%5D=field_room_type%3Aapartment";
+var searchUrl = "https://www.studentkotweb.be/nl/search?search=%28KdG%29%2C%20Campus%20Hoboken&latlon=51.173266800000%252C4.371204200000&proximity=1&distance=5.0&period%5Bfrom%5D=2021-08-01&period%5Bto%5D=2022-08-31&f%5B0%5D=field_room_type%3Aroom&f%5B1%5D=field_room_type%3Astudio&f%5B2%5D=field_quality_label%3A1&f%5B3%5D=field_rental_price%3A%5B0%20TO%20316%5D&f%5B4%5D=field_building%253Afield_facilities%3Ainternet";
 
 
 var baseUrl = "https://www.studentkotweb.be/";
@@ -105,6 +106,8 @@ async function ParseSearchPage(index) {
 
 		// This triggers a few times in a row but eh
 		if (done) {
+			console.log("Writing to file");
+			fs.writeFileSync("output.csv", fullResult);
 			console.log("Copying to clipboard!");
 			clipboardy.writeSync(fullResult);
 			console.log("Results copied to clipboard!");
