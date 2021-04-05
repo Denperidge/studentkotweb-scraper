@@ -4,11 +4,20 @@ const fs = require("fs");
 
 
 /* Verander deze variabeles door de website (https://www.website.be/) en de search page met alle criteria ingesteld zoals jij wilt (bv "https://www.studentkotweb.be/nl/search?search=%28KdG%29%2C%20Campus%20Hoboken&latlon=51.173266800000%252C4.371204200000&proximity=1&distance=5.0&period%5Bfrom%5D=2021-08-01&period%5Bto%5D=2022-08-31&f%5B0%5D=field_room_type%3Aroom&f%5B1%5D=field_room_type%3Astudio&f%5B2%5D=field_quality_label%3A1&f%5B3%5D=field_rental_price%3A%5B0%20TO%20316%5D&f%5B4%5D=field_building%253Afield_facilities%3Ainternet") */
-var baseUrl = "https://www.studentkotweb.be/";
-var searchUrl = "https://www.studentkotweb.be/nl/search?search=%28KdG%29%2C%20Campus%20Hoboken&latlon=51.173266800000%252C4.371204200000&proximity=1&distance=5.0&period%5Bfrom%5D=2021-08-01&period%5Bto%5D=2022-08-31&f%5B0%5D=field_room_type%3Aroom&f%5B1%5D=field_room_type%3Astudio&f%5B2%5D=field_quality_label%3A1&f%5B3%5D=field_rental_price%3A%5B0%20TO%20316%5D&f%5B4%5D=field_building%253Afield_facilities%3Ainternet";
-
+var baseUrl = "https://www.zimmo.be/";
+var searchUrl = "";
+/* OutputAsCsv
 var outputMode = OutputAsCsv;
+*/
 
+var indexAddition = "&pagina=";  // zimmo.be
+//var indexAddition = "&page=";  // Studentkotweb
+
+
+// /*
+var outputMode = OutputAsUrls;
+var filter = "student";
+// */
 
 
 
@@ -30,8 +39,12 @@ function querySelector(parsedPage, selector, all) {
 }
 
 async function GetElementsFromUrl(url, selectors, all=false) {
-	var rawPage = await got(url);
+	var rawPage = await got(url, {
+		timeout: 2000
+	});
 	var parsedPage = parse(rawPage.body);
+
+	console.log(rawPage.body)
 
 
 	// If only one selector, selectors==selector, return one collection
@@ -52,14 +65,16 @@ var roomLinks, pageIndex;
 
 async function ParseSearchPage(index) {
 	console.log("Getting all rooms from page " + index);
+	console.log(searchUrl + indexAddition + index)
 
-	[roomLinks, pageIndex] = await GetElementsFromUrl(searchUrl + "&page=" + index, ["div.m-teaser a.a-button-secondary", ".m-pagination-item:last-child"], all=true);
+	[roomLinks, pageIndex] = await GetElementsFromUrl(searchUrl + indexAddition + index, ["div.property-item_title a", "ul.pagination li"], all=true);
 	
 	roomLinks.forEach(ParseKotPage);
 
+	console.log(pageIndex)
 	// This reffers to lastPageDone for scraping the urls from the search pages, NOT the content from kotpages
-	var lastPageDone = pageIndex[0].classNames.includes("current");
-	
+	var lastPageDone = pageIndex[0].classNames.includes("current") || pageIndex[0].classNames.includes("active");
+
 	// Continue if need be, stop if need be
 	if (!lastPageDone) {
 		index++;
@@ -74,6 +89,17 @@ function ParseKotPage(roomLink) {
 	var roomUrl = baseUrl + roomLink.getAttribute("href");
 
 	outputMode(roomUrl);
+}
+
+// OutputAsUrls currently configured for zimmo
+async function OutputAsUrls(roomUrl) {
+	var roomData = await GetElementsFromUrl(roomUrl, ".description-block");
+	if (roomData[0].innerText.includes(filter)) fullResult += roomUrl + "\r\n";
+
+	if (done) {
+		console.log("Writing to file");
+		fs.writeFileSync("output.txt", fullResult);
+	}
 }
 
 // OutputAsCsv currently configured for studentkotweb
